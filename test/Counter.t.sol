@@ -16,12 +16,15 @@ contract CounterTest is Test {
         assertEq(counter.counter(), 1);
     }
 
-    function testFailDec() public {
+    function testDec() public {
         counter.dec();
+        assertEq(counter.counter(), -1);
     }
 
-    function test_revert_dec_on_zero() public {
-        vm.expectRevert(stdError.arithmeticError);
+    function testReset() public {
         counter.dec();
+        assertEq(counter.counter(), -1);
+        counter.reset();
+        assertEq(counter.counter(), 0);
     }
 }

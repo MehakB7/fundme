@@ -11,23 +11,25 @@ error CampaignFailed();
 contract Campaign {
     event DonationReceived(address indexed donor, uint amount);
     event CampaginEnded(bool isSuccess);
-
     enum CampaignType {
         FIXED,
         FLEXIBLE
     }
 
-    uint public goal;
-    uint public endDate;
-    uint public startTime;
-    address public owner;
-    bool public campaignEnded;
-    bool public isSuccess;
-    string public cid;
+    address private owner;
+    bool private hasCampaignEnded;
+    bool private hasCampaignSucceed;
+    CampaignType private campaignType = CampaignType.FIXED;
 
-    CampaignType public campaignType = CampaignType.FIXED;
-    mapping(address => uint) public donars;
-    address[] public donarAddress;
+    uint256 private goal;
+    uint256 private endDate;
+    uint256 private startTime;
+    uint256 private totalDonation;
+
+    string private cid;
+
+    mapping(address => uint) private donars;
+    address[] private donarAddress;
 
     constructor(
         string memory _cid,
@@ -46,7 +48,7 @@ contract Campaign {
 
     modifier isWithinDate() {
         if (block.timestamp > endDate) {
-            campaignEnded = true;
+            hasCampaignEnded = true;
             revert CampaignHasEnded();
         }
         _;
@@ -60,7 +62,7 @@ contract Campaign {
     }
 
     function deposite() public payable isWithinDate {
-        if (campaignEnded) {
+        if (hasCampaignEnded) {
             revert CampaignHasEnded();
         }
         if (donars[msg.sender] == 0) {
@@ -68,14 +70,15 @@ contract Campaign {
         }
         donars[msg.sender] += msg.value;
         emit DonationReceived(msg.sender, msg.value);
+        totalDonation += msg.value;
     }
 
     function withdraw() public onlyOwner {
-        if (!campaignEnded) {
+        if (!hasCampaignEnded) {
             revert CampaignStillRunning();
         }
 
-        if (!isSuccess && campaignType == CampaignType.FIXED) {
+        if (!hasCampaignSucceed && campaignType == CampaignType.FIXED) {
             revert CampaignFailed();
         }
 
@@ -86,7 +89,7 @@ contract Campaign {
     }
 
     function withdrawByDoner() public {
-        if (!campaignEnded) {
+        if (!hasCampaignEnded) {
             revert CampaignStillRunning();
         }
 
@@ -104,13 +107,45 @@ contract Campaign {
     }
 
     function endCampaign() public onlyOwner {
-        campaignEnded = true;
+        hasCampaignEnded = true;
         if (goal <= address(this).balance) {
-            isSuccess = true;
+            hasCampaignSucceed = true;
         }
 
-        emit CampaginEnded(isSuccess);
+        emit CampaginEnded(hasCampaignSucceed);
     }
 
     receive() external payable {}
+
+    function totalDonars() external view returns (uint256) {
+        return donarAddress.length;
+    }
+
+    function getGoal() external view returns (uint256) {
+        return goal;
+    }
+
+    function getTotalDonation() external view returns (uint256) {
+        return totalDonation;
+    }
+
+    function getCId() external view returns (string memory) {
+        return cid;
+    }
+
+    function getCampiagnInfo()
+        external
+        view
+        returns (uint256, uint256, uint256, bool, bool, address, CampaignType)
+    {
+        return (
+            goal,
+            totalDonation,
+            endDate,
+            hasCampaignEnded,
+            hasCampaignSucceed,
+            owner,
+            campaignType
+        );
+    }
 }

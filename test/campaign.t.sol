@@ -93,6 +93,8 @@ contract CampaignTest is Test {
     function testAllowDonarToWithdrawFromFixedCampaign() public {}
 
     function testGetInfoshouldReturnCampaignInfo() public {
+        vm.txGasPrice(4);
+        uint256 startGas = gasleft();
         hoax(address(1), 300);
         donate(300, address(c));
         (
@@ -111,6 +113,7 @@ contract CampaignTest is Test {
         assertEq(r_hasCampaignSucceed, false);
         assertEq(r_owner, address(this));
         assertEq(uint8(r_ct), uint8(ct));
+        console.log("gas used %s", startGas - gasleft());
     }
 
     receive() external payable {}

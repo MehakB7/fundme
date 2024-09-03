@@ -93,10 +93,9 @@ contract Campaign {
             revert CampaignStillRunning();
         }
 
-        require(
-            s_campaignType == CampaignType.FLEXIBLE,
-            "can't withdraw money from fixed campagin"
-        );
+        if (s_campaignType == CampaignType.FLEXIBLE) {
+            revert("can't withdraw money from FLEXIBLE campagin");
+        }
 
         uint donataion = s_donars[msg.sender];
         if (donataion != 0) {

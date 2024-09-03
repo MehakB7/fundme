@@ -8,19 +8,22 @@ contract CampaignTest is Test {
     event DonationReceived(address indexed donor, uint amount);
     Campaign c;
     Campaign fc;
+    uint256 startTime;
+    uint256 endTime;
+    uint256 dayDuration = 4;
+    uint goal = 400;
+    string cid = "Mehak";
+    Campaign.CampaignType ct = Campaign.CampaignType.FIXED;
+
     function setUp() public {
-        c = new Campaign(
-            "Mehak",
-            400,
-            4,
-            address(this),
-            Campaign.CampaignType.FIXED
-        );
+        startTime = block.timestamp;
+        endTime = block.timestamp + dayDuration * 1 days;
+        c = new Campaign(cid, goal, dayDuration, address(this), ct);
 
         fc = new Campaign(
-            "Mehak",
-            400,
-            4,
+            cid,
+            goal,
+            dayDuration,
             address(this),
             Campaign.CampaignType.FLEXIBLE
         );
@@ -65,7 +68,7 @@ contract CampaignTest is Test {
         donate(400, address(c));
         assertEq(address(c).balance, 400);
         c.endCampaign();
-        assertTrue(c.isSuccess() == true, "campaing run successfully");
+        assertTrue(c.hasCampaignSucceed() == true, "campaing run successfully");
         c.withdraw();
         assertEq(address(c).balance, 0);
     }
@@ -75,7 +78,7 @@ contract CampaignTest is Test {
         donate(300, address(fc));
         assertEq(address(fc).balance, 300);
         fc.endCampaign();
-        assertTrue(c.isSuccess() == false, "campaing failed");
+        assertTrue(c.hasCampaignSucceed() == false, "campaing failed");
         fc.withdraw();
         assertEq(address(fc).balance, 0);
     }
@@ -88,6 +91,27 @@ contract CampaignTest is Test {
     }
 
     function testAllowDonarToWithdrawFromFixedCampaign() public {}
+
+    function testGetInfoshouldReturnCampaignInfo() public {
+        hoax(address(1), 300);
+        donate(300, address(c));
+        (
+            uint256 r_goal,
+            uint256 r_totalDonation,
+            uint256 r_campaignEndDate,
+            bool r_hasCampaignEnded,
+            bool r_hasCampaignSucceed,
+            address r_owner,
+            Campaign.CampaignType r_ct
+        ) = c.getCampiagnInfo();
+        assertEq(r_goal, goal);
+        assertEq(r_totalDonation, 300);
+        assertEq(r_campaignEndDate, endTime);
+        assertEq(r_hasCampaignEnded, false);
+        assertEq(r_hasCampaignSucceed, false);
+        assertEq(r_owner, address(this));
+        assertEq(uint8(r_ct), uint8(ct));
+    }
 
     receive() external payable {}
 }

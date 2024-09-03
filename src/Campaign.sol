@@ -28,8 +28,8 @@ contract Campaign {
 
     string private s_cid;
 
-    mapping(address => uint) private donars;
-    address[] private donarAddress;
+    mapping(address => uint) private s_donars;
+    address[] private s_donarAddress;
 
     constructor(
         string memory _cid,
@@ -65,10 +65,10 @@ contract Campaign {
         if (s_hasCampaignEnded) {
             revert CampaignHasEnded();
         }
-        if (donars[msg.sender] == 0) {
-            donarAddress.push(msg.sender);
+        if (s_donars[msg.sender] == 0) {
+            s_donarAddress.push(msg.sender);
         }
-        donars[msg.sender] += msg.value;
+        s_donars[msg.sender] += msg.value;
         emit DonationReceived(msg.sender, msg.value);
         s_totalDonation += msg.value;
     }
@@ -98,9 +98,9 @@ contract Campaign {
             "can't withdraw money from fixed campagin"
         );
 
-        uint donataion = donars[msg.sender];
+        uint donataion = s_donars[msg.sender];
         if (donataion != 0) {
-            donars[msg.sender] = 0;
+            s_donars[msg.sender] = 0;
             (bool success, ) = msg.sender.call{value: donataion}("");
             require(success);
         }
@@ -118,7 +118,7 @@ contract Campaign {
     receive() external payable {}
 
     function totalDonars() external view returns (uint256) {
-        return donarAddress.length;
+        return s_donarAddress.length;
     }
 
     function getGoal() external view returns (uint256) {
@@ -131,6 +131,10 @@ contract Campaign {
 
     function getCId() external view returns (string memory) {
         return s_cid;
+    }
+
+    function hasCampaignSucceed() external view returns (bool) {
+        return s_hasCampaignSucceed;
     }
 
     function getCampiagnInfo()
